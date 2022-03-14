@@ -1,135 +1,126 @@
-from array import *
 from sys import argv
 
-#returns a soduko board from the text file
-def readSudoku():
+#create your board
+def createBoard():
     with open(argv[1], 'r') as f:
-        skipline = 0
-
-        row = [0,0,0,0,0,0,0,0,0]
         board = []
-
+        skipLine = 0
         for line in f:
-            i = 0;
-            row = [0,0,0,0,0,0,0,0,0]
-            if skipline>0:
+            row = []
+            if skipLine > 0:
                 for num in line:
-                    if(num != "\n"):
-                        row[i] = num
-                        i += 1
-                if(row != [0,0,0,0,0,0,0,0,0]):
-                    board.append(row)
-            
-            skipline += 1
-    return board
+                    if not num =='\n':
+                        row.append(int(num))
+                board.append(row)
+            skipLine += 1
+        return board
 
-
+#prints your board
 def printBoard(board):
-    for y in range(9):
-        for x in range(9):
-            print(board[y][x] + " ",end = "")
+    for row in range(9):
         print()
+        for column in range(9):
+            print(board[row][column], end="  ")
 
-
-
-def findIndexofValue(possible, find):
-    i = 0
-    for value in possible:
-        if find == value:
-            return i
-        i += 1
-
-def findPossibleValues(board, x, y):
-
-    row=board[y]
-    column = []
-    box = []
+#checks a win by looking for zeros
+def checkWin(board):
+    for row in range(9):
+        for column in range(9):
+            if board[row][column] == 0:
+                return False
     
-    #get column values
-    for value in board:
-        column.append(value[x])
+    return True
 
-    box_x = x
-    box_y = y
-
-    #get box values
-    if x==1 or x==2:
-        box_x = 0
-    elif x==4 or x==5:
-        box_x = 3
-    elif x==7 or x==8:
-        box_x = 6
-    
-    if y==1 or y==2:
-        box_y = 0
-    elif y==4 or y==5:
-        box_y = 3
-    elif y==7 or y==8:
-        box_y = 6
-
-    #add to box array
-    box.append(board[box_y][box_x + 1])
-    box.append(board[box_y][box_x + 2])
-    box.append(board[box_y + 1][box_x])
-    box.append(board[box_y + 1][box_x + 1])
-    box.append(board[box_y + 1][box_x + 2])
-    box.append(board[box_y + 2][box_x])
-    box.append(board[box_y + 2][box_x + 1])
-    box.append(board[box_y + 2][box_x + 2])
-
-    notPossible = {}
+def getPossibleValues(board, rownum, colnum):
     notPossible = set()
 
-    for num in row:
-        notPossible.add(int(num))
-    for num in column:
-        notPossible.add(int(num))
-    for num in box:
-        notPossible.add(int(num))
+    for row in range(9):
+        for col in range(9):
+            if row == rownum:
+                notPossible.add(board[row][col])
+            if col == colnum:
+                notPossible.add(board[row][col])
+
+    if rownum > 0 and rownum < 3:
+        rownum = 0 
+    elif rownum  > 3 and rownum < 6:
+        rownum = 3
+    elif rownum > 6:
+        rownum = 6
+
+    if colnum > 0 and colnum < 3:
+        colnum = 0
+    elif colnum > 3 and colnum < 6:
+        colnum = 3
+    elif colnum > 6:
+        colnum = 6
     
-    possible = {}
-    possible = set()
+    #this is sort of unorganized but it works for getting box values
+    for right in range(3):
+        for down in range(3):
+            notPossible.add(board[rownum + right][colnum + down])
 
-    for i in range(1, 10):
-        if i in notPossible:
-            continue
-        else:
-            possible.add(i)
-
-
+    
+    possible = [1,2,3,4,5,6,7,8,9]
+    for num in notPossible:
+        if num in possible:
+            possible.remove(num)
 
     return possible
+    
+#solve
+    #iterate through each
+        #check possible values
+            #plug in each possible value and if it doesnt work 
 
+def backtrackZeros(board):
+    for row in range(9):
+        for col in range(9):
+            if board[row][col] == 0:
+                possible = getPossibleValues(board, row, col)
+                if len(possible) == 0:
+                    return False    
+    
+    return True
 
-
+def smartSearch(board):
+    while not checkWin(board):
+        changes = 0
+        for row in range(9):
+            for col in range(9):
+                tile = board[row][col]
+                if tile == 0:
+                    possible = getPossibleValues(board, row, col)
+                    if len(possible) == 1:
+                        board[row][col] = possible[0]
+                        changes += 1
+        if changes == 0:
+            break
+    return board
+    
 
 def main():
-    board = readSudoku()
-    #board is arranged in [columns][rows]
-
-    solved = False
-    counter = 0
-    while not solved:
-        for y in range(9):
-            for x in range(9):
-                if board[y][x] == '0':
-                    possible = findPossibleValues(board, x, y)
-                        #print("x" + str(x) + "y" + str(y) + str(possible))
-                    if len(possible) == 1:
-                        for num in possible:
-                            board[y][x] = str(num)
-        counter += 1
-        if counter == 1000:
-            solved = True
-
-    #print(findPossibleValues(board, 8, 7))
+    #to access a board first specify the row, then column board[row][column]
+    board = createBoard()
     printBoard(board)
+    getPossibleValues(board, 0, 0)
 
+    #windles down possible combinations
+    board = smartSearch(board)
 
     
+    for row in range(9):
+        for col in range(9):
+            possible = getPossibleValues(board, row, col)
+            temp = board[row][col]
+            for num in possible:
+                board[row][col] = num
+                if backtrackZeros(board) is False:
+                    board[row][col] = temp
+    board = smartSearch(board)
 
+    print()           
+    printBoard(board)
     
-
-
 
 main()
