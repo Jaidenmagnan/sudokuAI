@@ -31,6 +31,16 @@ def checkWin(board):
     
     return True
 
+#Decides if a number is valid in an array
+def valid(board, num, row, col):
+    possible = getPossibleValues(board, row, col)
+    for value in possible:
+        if value == num:
+            return True
+    else:
+        return False
+
+#gets all possible values of a tile
 def getPossibleValues(board, rownum, colnum):
     notPossible = set()
 
@@ -67,22 +77,36 @@ def getPossibleValues(board, rownum, colnum):
             possible.remove(num)
 
     return possible
-    
-#solve
-    #iterate through each
-        #check possible values
-            #plug in each possible value and if it doesnt work 
 
-def backtrackZeros(board):
-    for row in range(9):
-        for col in range(9):
+#Uses backtracking to solve set
+def backTracker(board):
+    check = getEmpty(board)
+    if not check:
+        return True;
+    else:
+        row, col = getEmpty(board)
+
+    for i in range(1,10):
+        if valid(board, i, row, col):
+            board[row][col] = i
+
+            if backTracker(board):
+                return True
+
+            board[row][col] = 0
+
+
+    return False
+
+#Gets next empty tile
+def getEmpty(board):
+    for row in range(len(board)):
+        for col in range(len(board[0])):
             if board[row][col] == 0:
-                possible = getPossibleValues(board, row, col)
-                if len(possible) == 0:
-                    return False    
-    
-    return True
+                return (row, col)
+    return None
 
+#Skims out board by placing in obvious answers
 def smartSearch(board):
     while not checkWin(board):
         changes = 0
@@ -108,18 +132,8 @@ def main():
     #windles down possible combinations
     board = smartSearch(board)
 
-    
-    for row in range(9):
-        for col in range(9):
-            possible = getPossibleValues(board, row, col)
-            temp = board[row][col]
-            for num in possible:
-                board[row][col] = num
-                if backtrackZeros(board) is False:
-                    board[row][col] = temp
-    board = smartSearch(board)
-
-    print()           
+    print()
+    backTracker(board)
     printBoard(board)
     
 
